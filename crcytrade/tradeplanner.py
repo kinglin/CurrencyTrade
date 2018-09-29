@@ -40,6 +40,8 @@ class tradeplanner:
         tmmf_params_df['tm_ps_medium'] = [0.5, 2, 2, 3.5]
         tmmf_params_df['tm_ps_high'] = [2.5, 4, 100, 100]
 
+        tmmf_params_df *= 3
+
         tmmf_range_params_df = pd.DataFrame()
         tmmf_range_params_df['tm_sd'] = [6.01]
         tmmf_range_params_df['tm_ds'] = [6.01]
@@ -47,6 +49,8 @@ class tradeplanner:
         tmmf_range_params_df['tm_ps'] = [6.01]
         tmmf_range_params_df['tm_dp'] = [6.01]
         tmmf_range_params_df['tm_pd'] = [6.01]
+
+        tmmf_range_params_df *= 3
 
         self.tm_s_d = ctrl.Consequent(np.arange(0, tmmf_range_params_df['tm_sd'][0], 0.01), 'tm_s_d')
         self.tm_s_p = ctrl.Consequent(np.arange(0, tmmf_range_params_df['tm_sp'][0], 0.01), 'tm_s_p')
