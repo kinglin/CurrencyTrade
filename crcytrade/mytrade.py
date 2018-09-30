@@ -21,10 +21,10 @@ forecast_train_df = forecast_df[6:501]
 delta_test_df = delta_df[502:606]
 forecast_test_df = forecast_df[502:606]
 
-def main():
 
+def main():
     if TEST == 1:
-        tmmf_params_df, tmmf_range_params_df = init_test_tmmf_dfs()
+        tmmf_params_df, tmmf_range_params_df = init_tmmf_dfs()
         arbi = arbitrator.arbitrator(tmmf_params_df, tmmf_range_params_df)
         trade_final_result_df = pd.DataFrame(columns=(
             'week_num', 'is_trade', 'a_start', 'a_end', 'profit', 'hold_profit', 'trade_profit', 'as_start', 'as_end',
@@ -36,15 +36,15 @@ def main():
                                                               trade_final_result_df.iloc[t - 1] if t > 0 else None,
                                                               ALL_HOLD)
 
-        trade_final_result_df.to_csv("trade_test_result.csv", index=False, sep=',')
+        trade_final_result_df.to_csv("trade_final_result.csv", index=False, sep=',')
     else:
         tmmf_params_df, tmmf_range_params_df = init_tmmf_dfs()
         data = np.append(tmmf_params_df.T.values.flatten(), tmmf_range_params_df.T.values.flatten()).tolist()
         ga = pyeasyga.GeneticAlgorithm(data,
                                        population_size=50,
-                                       generations=5,
-                                       crossover_probability=0.2,
-                                       mutation_probability=0.1,
+                                       generations=50,
+                                       crossover_probability=0.1,
+                                       mutation_probability=0.9,
                                        elitism=True,
                                        maximise_fitness=True)
         ga.fitness_function = fitness
@@ -67,7 +67,7 @@ def main():
                                                               trade_final_result_df.iloc[t - 1] if t > 0 else None,
                                                               ALL_HOLD)
 
-        trade_final_result_df.to_csv("trade_final_result.csv", index=False, sep=',')
+        trade_final_result_df.to_csv("trade_ga_result.csv", index=False, sep=',')
 
     return
 
@@ -80,6 +80,7 @@ def create_individual(data):
     for i in range(6):
         base5 = [random.uniform(0, mf_range[i]) for _ in range(5)]
         base5.sort()
+        base5[0] = 0
         low2 = [random.uniform(base5[0], base5[2]) for _ in range(2)]
         low2.sort()
         med2 = [random.uniform(base5[1], base5[4]) for _ in range(2)]
@@ -103,12 +104,12 @@ def create_individual(data):
 
     return result
 
-def fitness(individual, data):
 
+def fitness(individual, data):
     fitness_value = 0
     idmf_params_df, idmf_range_df = get_mfdf_from_data(individual)
 
-    if is_meet_constraints(idmf_params_df):
+    if is_meet_constraints(idmf_params_df, idmf_range_df):
         arbi = arbitrator.arbitrator(conv_paramdf_key(idmf_params_df), conv_rangedf_key(idmf_range_df))
         trade_plan_result_df = pd.DataFrame(columns=(
             'week_num', 'is_trade', 'a_start', 'a_end', 'profit', 'hold_profit', 'trade_profit', 'as_start', 'as_end',
@@ -119,9 +120,11 @@ def fitness(individual, data):
                 trade_plan_result_df.loc[t] = arbi.arbitrate(delta_train_df, forecast_train_df, t,
                                                              trade_plan_result_df.iloc[t - 1] if t > 0 else None,
                                                              ALL_HOLD)
-        fitness_value = trade_plan_result_df['profit'].sum()
+        fitness_value = trade_plan_result_df['a_start'][len(trade_plan_result_df['a_start']) - 1] - \
+                        trade_plan_result_df['a_start'][0]
         print(fitness_value)
     return fitness_value
+
 
 def get_mfdf_from_data(data):
     idmf_params_df = pd.DataFrame()
@@ -161,6 +164,7 @@ def init_tmmf_dfs():
     tmmf_range_params_df['tm_sp'] = [6.01]
     tmmf_range_params_df['tm_ps'] = [6.01]
     return tmmf_params_df, tmmf_range_params_df
+
 
 def init_test_tmmf_dfs():
     tmmf_params_df = pd.DataFrame()
@@ -215,6 +219,7 @@ def conv_paramdf_key(idmf_params_df):
     df['tm_ps_high'] = idmf_params_df[17]
     return df
 
+
 def conv_rangedf_key(idmf_range_df):
     df = pd.DataFrame()
     df['tm_sd'] = idmf_range_df[0]
@@ -225,8 +230,8 @@ def conv_rangedf_key(idmf_range_df):
     df['tm_ps'] = idmf_range_df[5]
     return df
 
-def is_meet_constraints(idmf_params_df):
 
+def is_meet_constraints(idmf_params_df, idmf_range_df):
     for i in range(len(idmf_params_df.columns)):
         if idmf_params_df[i][0] > idmf_params_df[i][1] or \
                 idmf_params_df[i][1] > idmf_params_df[i][2] or \
@@ -235,9 +240,21 @@ def is_meet_constraints(idmf_params_df):
             print(idmf_params_df)
             return False
     for i in range(6):
-        if not idmf_params_df[i * 3][0] < idmf_params_df[i * 3 + 1][0] < idmf_params_df[i * 3][3] \
-            < idmf_params_df[i * 3 + 2][0] < idmf_params_df[i * 3 + 1][3]:
+        if idmf_range_df[i][0] < 3:
+            print("====do not meet constraints 4===")
+            print(idmf_params_df)
+            return False
+        if idmf_params_df[i * 3][0] != 0:
+            print("====do not meet constraints 5===")
+            print(idmf_params_df)
+            return False
+        if not idmf_params_df[i * 3][0] < idmf_params_df[i * 3 + 1][0] < idmf_params_df[i * 3][3] < \
+               idmf_params_df[i * 3 + 2][0] < idmf_params_df[i * 3 + 1][3]:
             print("====do not meet constraints 2===")
+            print(idmf_params_df)
+            return False
+        if idmf_params_df[i * 3 + 2][3] < idmf_range_df[i][0]:
+            print("====do not meet constraints 3===")
             print(idmf_params_df)
             return False
     return True
