@@ -5,9 +5,9 @@ from crcytrade import mytrade
 
 class arbitrator:
 
-    def __init__(self):
+    def __init__(self, tmmf_params_df, tmmf_range_params_df):
 
-        self.planner = tradeplanner()
+        self.planner = tradeplanner(tmmf_params_df, tmmf_range_params_df)
         self.sfspt = sfsupport()
         self.blank_trade = {'trade_s_d':0, 'trade_s_p' : 0, 'trade_d_s' : 0, 'trade_d_p' : 0,'trade_p_s' : 0,'trade_p_d' : 0}
         pass
@@ -17,7 +17,7 @@ class arbitrator:
         a_origin = self.get_a(last_trade)
         if ALL_HOLD == 1:
             a_hold_next, hold_profit = self.get_all_hold_profit(a_origin, forecast_test_df, delta_test_df, t)
-            return self.get_trade_plan_df_row(t, 0, a_hold_next, self.blank_trade, hold_profit)
+            return self.get_trade_plan_df_row(t, 0, a_hold_next, self.blank_trade, hold_profit, hold_profit, 0)
 
         trade_plan = self.planner.defuzzify(delta_test_df.iloc[t+1])
         trade_plan = self.eliminate_useless_trade(trade_plan)

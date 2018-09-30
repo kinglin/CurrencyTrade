@@ -2,16 +2,15 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 from crcytrade import mytrade
-import pandas as pd
 
 
 class tradeplanner:
 
-    def __init__(self):
-        self.fuzzify()
+    def __init__(self, tmmf_params_df, tmmf_range_params_df):
+        self.fuzzify(tmmf_params_df, tmmf_range_params_df)
         self.inference()
 
-    def fuzzify(self):
+    def fuzzify(self, tmmf_params_df, tmmf_range_params_df):
 
         self.pos_pct_delta_s_d = ctrl.Antecedent(np.arange(0, 2.01, 0.01), 'pos_pct_delta_s_d')
         self.neg_pct_delta_s_d = ctrl.Antecedent(np.arange(0, 2.01, 0.01), 'neg_pct_delta_s_d')
@@ -19,38 +18,6 @@ class tradeplanner:
         self.neg_pct_delta_p_d = ctrl.Antecedent(np.arange(0, 4.01, 0.01), 'neg_pct_delta_p_d')
         self.pos_pct_delta_p_s = ctrl.Antecedent(np.arange(0, 4.01, 0.01), 'pos_pct_delta_p_s')
         self.neg_pct_delta_p_s = ctrl.Antecedent(np.arange(0, 4.01, 0.01), 'neg_pct_delta_p_s')
-
-        tmmf_params_df = pd.DataFrame()
-        tmmf_params_df['tm_sd_low'] = [0, 0, 0.25, 1.5]
-        tmmf_params_df['tm_sd_medium'] = [0.5, 2, 2, 3.5]
-        tmmf_params_df['tm_sd_high'] = [2.5, 4, 100, 100]
-        tmmf_params_df['tm_ds_low'] = [0, 0, 0.25, 1.5]
-        tmmf_params_df['tm_ds_medium'] = [0.5, 2, 2, 3.5]
-        tmmf_params_df['tm_ds_high'] = [2.5, 4, 100, 100]
-        tmmf_params_df['tm_dp_low'] = [0, 0, 0.25, 1.5]
-        tmmf_params_df['tm_dp_medium'] = [0.5, 2, 2, 3.5]
-        tmmf_params_df['tm_dp_high'] = [2.5, 4, 100, 100]
-        tmmf_params_df['tm_pd_low'] = [0, 0, 0.25, 1.5]
-        tmmf_params_df['tm_pd_medium'] = [0.5, 2, 2, 3.5]
-        tmmf_params_df['tm_pd_high'] = [2.5, 4, 100, 100]
-        tmmf_params_df['tm_sp_low'] = [0, 0, 0.25, 1.5]
-        tmmf_params_df['tm_sp_medium'] = [0.5, 2, 2, 3.5]
-        tmmf_params_df['tm_sp_high'] = [2.5, 4, 100, 100]
-        tmmf_params_df['tm_ps_low'] = [0, 0, 0.25, 1.5]
-        tmmf_params_df['tm_ps_medium'] = [0.5, 2, 2, 3.5]
-        tmmf_params_df['tm_ps_high'] = [2.5, 4, 100, 100]
-
-        tmmf_params_df *= 3
-
-        tmmf_range_params_df = pd.DataFrame()
-        tmmf_range_params_df['tm_sd'] = [6.01]
-        tmmf_range_params_df['tm_ds'] = [6.01]
-        tmmf_range_params_df['tm_sp'] = [6.01]
-        tmmf_range_params_df['tm_ps'] = [6.01]
-        tmmf_range_params_df['tm_dp'] = [6.01]
-        tmmf_range_params_df['tm_pd'] = [6.01]
-
-        tmmf_range_params_df *= 3
 
         self.tm_s_d = ctrl.Consequent(np.arange(0, tmmf_range_params_df['tm_sd'][0], 0.01), 'tm_s_d')
         self.tm_s_p = ctrl.Consequent(np.arange(0, tmmf_range_params_df['tm_sp'][0], 0.01), 'tm_s_p')
